@@ -1,4 +1,4 @@
-name: Selenium CI with Maven
+name: Run Selenium Tests
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v3
 
     - name: Set up JDK 17
@@ -23,10 +23,23 @@ jobs:
     - name: Cache Maven packages
       uses: actions/cache@v3
       with:
-        path: ~/.m2
+        path: ~/.m2/repository
         key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           ${{ runner.os }}-maven-
 
-    - name: Run tests with Maven
-      run: mvn clean test
+    - name: Install Chrome
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+
+    - name: Install ChromeDriver
+      uses: nanasess/setup-chromedriver@v1
+      with:
+        chrome-version: stable
+
+    - name: Build End_To_EndProject dependency
+      run: mvn install -f seleniumwebdriver/End_To_EndProject/pom.xml
+
+    - name: Run Selenium Tests
+      run: mvn clean test -f seleniumwebdriver/pom.xml
